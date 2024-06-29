@@ -27,9 +27,10 @@ passport.use(new GoogleStrategy(
     {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        callbackURL: '/auth/google/callback',
+        callbackURL: 'http://localhost:5000/auth/google/callback',
     },
     async (accessToken, refreshToken, profile, done) => {
+        console.log("function called");
         try {
             console.log(profile);
             let user = await User.findOne({
@@ -55,10 +56,12 @@ passport.use(new GoogleStrategy(
 ));
 
 passport.serializeUser((user, done) => {
+    console.log("user seralized");
     done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
+    console.log("deseralized user");
     try {
         const user = await User.findById(id);
         done(null, user);
