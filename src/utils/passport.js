@@ -1,27 +1,8 @@
 const passport = require('passport');
-const LocalStrategy = require('passport-local');
+
 const GoogleStrategy = require('passport-google-oauth2');
 const User = require('../modals/user.modal.js');
 
-// GoogleStrategy for email password login 
-passport.use(new LocalStrategy(
-    { usernameField: 'email' },
-    async (email, password, done) => {
-        try {
-            const foundUser = await User.findOne({ email });
-            if (!foundUser) return done(null, false, { message: 'Invalid Email' });
-
-            const isMatch = User.isPasswordCorrect(password);
-            if (!isMatch) return done(null, false, { message: 'Incorrect Password' });
-
-            return done(null, foundUser);
-        }
-        catch (error) {
-            done(error);
-        }
-
-    }
-));
 
 passport.use(new GoogleStrategy(
     {
@@ -30,7 +11,7 @@ passport.use(new GoogleStrategy(
         callbackURL: 'http://localhost:5000/auth/google/callback',
     },
     async (accessToken, refreshToken, profile, done) => {
-        console.log("function called");
+        console.log("google startegy function called");
         try {
             console.log(profile);
             let user = await User.findOne({
@@ -40,12 +21,14 @@ passport.use(new GoogleStrategy(
                 ]
             });
             if (!user) {
+                console.log("the user is this ", user);
                 user = await User.create({
                     email: profile.emails[0].value,
                     googleId: profile.id,
                     displayName: profile.displayName,
                     avatar: profile.photos[0].value
                 });
+                console.log("created user is ", user);
             }
             return done(null, user);
 
