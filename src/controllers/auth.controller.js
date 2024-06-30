@@ -1,29 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler.js');
-const User = require("../modals/user.modal.js");
+const generateAccessAndRefreshToken = require("../utils/generateAccessAndRefreshToken.js");
 const passport = require("passport");
-const ApiError = require('../utils/ApiError.js');
-const ApiResponse = require('../utils/ApiResponse.js');
-
-const options = {
-    httpOnly: true,
-    secure: true
-}
-
-const generateAccessAndRefreshToken = async (userId) => {
-    try {
-        const user = await User.findOne({ _id: userId });
-        const accessToken = user.generateAccessToken();
-        const refreshToken = user.generateRefreshToken();
-
-        user.refreshToken = refreshToken;
-        await user.save();
-        return { accessToken, refreshToken };
-    } catch (error) {
-        console.log("Error while generating tokens", error.message);
-        throw new ApiError(500, "Something went wrong while generating tokens");
-    }
-}
-
 
 const googleLogin = asyncHandler(async (req, res) => {
     const user = req.user;
@@ -49,6 +26,5 @@ const googleLogin = asyncHandler(async (req, res) => {
 
 
 module.exports = {
-
     googleLogin,
 }
