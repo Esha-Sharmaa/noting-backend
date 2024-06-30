@@ -8,12 +8,13 @@ const noteSchema = mongoose.Schema({
     },
     content: {
         type: String,
-        required: true,
         trim: true,
+        default: ""
     },
     type: {
         type: String,
         enum: ["text", "image", "list"],
+        default: "text",
         required: true
     },
     userId: {
@@ -45,6 +46,12 @@ const noteSchema = mongoose.Schema({
     },
     reminder: {
         type: Date
+    },
+    listItems: [{
+        type: String
+    }],
+    imageUrl: {
+        type: String
     }
 }, { timestamps: true });
 
