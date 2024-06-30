@@ -3,7 +3,8 @@ const passport = require('passport');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const session = require('express-session');
-require('./utils/passport.js'); // Ensure passport strategies are configured
+const errorHandler = require("./middleware/errorHandler.middleware.js");
+require('./utils/passport.js');
 
 
 const app = express();
@@ -25,10 +26,19 @@ app.use(session({
 // Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+
 // importing routes 
 const authRoutes = require("./routers/auth.routes.js");
+const userRoutes = require("./routers/user.routes.js");
+
+
 app.get('/', (req, res) => {
     res.send('Hello From the server');
 });
 app.use(authRoutes);
+app.use('/api/v1/users', userRoutes);
+
+// using error handling custom middleware
+app.use(errorHandler);
 module.exports = app;

@@ -1,7 +1,8 @@
 const User = require("../modals/user.modal.js");
 const ApiError = require('../utils/ApiError.js');
 
-export const generateAccessAndRefreshToken = async (userId) => {
+
+const generateAccessAndRefreshToken = async (userId) => {
     try {
         const user = await User.findOne({ _id: userId });
         const accessToken = user.generateAccessToken();
@@ -15,3 +16,5 @@ export const generateAccessAndRefreshToken = async (userId) => {
         throw new ApiError(500, "Something went wrong while generating tokens");
     }
 }
+
+module.exports = generateAccessAndRefreshToken;
