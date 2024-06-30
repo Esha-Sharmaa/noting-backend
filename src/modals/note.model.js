@@ -42,7 +42,7 @@ const noteSchema = mongoose.Schema({
         type: Date
     },
     notification: {
-        type: boolean
+        type: Boolean
     },
     reminder: {
         type: Date
