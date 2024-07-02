@@ -61,5 +61,10 @@ const noteSchema = mongoose.Schema(
   },
   { timestamps: true }
 );
-
+noteSchema.virtual("collaborators", {
+  ref: "Collaborator",
+  localField: "_id",
+  foreignField: "note",
+  justOne: false,
+});
 module.exports = mongoose.model("Note", noteSchema);
