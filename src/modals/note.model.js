@@ -1,59 +1,65 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const noteSchema = mongoose.Schema({
+const noteSchema = mongoose.Schema(
+  {
     title: {
-        type: String,
-        required: true,
-        trim: true,
+      type: String,
+      required: true,
+      trim: true,
     },
     content: {
-        type: String,
-        trim: true,
-        default: ""
+      type: String,
+      trim: true,
+      default: "",
     },
     type: {
-        type: String,
-        enum: ["text", "image", "list"],
-        default: "text",
-        required: true
+      type: String,
+      enum: ["text", "image", "list"],
+      default: "text",
+      required: true,
     },
-    userId: {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    label: [
+      {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
-    labelId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Label"
-    },
+        ref: "Label",
+      },
+    ],
     isPinned: {
-        type: Boolean,
-        default: false
+      type: Boolean,
+      default: false,
     },
     isArchived: {
-        type: Boolean,
-        default: false
+      type: Boolean,
+      default: false,
     },
     isTrashed: {
-        type: Boolean,
-        default: false
+      type: Boolean,
+      default: false,
     },
     trashedAt: {
-        type: Date
+      type: Date,
     },
     notification: {
-        type: Boolean
+      type: Boolean,
     },
     reminder: {
-        type: Date
+      type: Date,
     },
-    listItems: [{
-        type: String
-    }],
+    listItems: [
+      {
+        type: String,
+      },
+    ],
     imageUrl: {
-        type: String
-    }
-}, { timestamps: true });
+      type: String,
+    },
+  },
+  { timestamps: true }
+);
 
-
-module.exports = mongoose.model('Note', noteSchema);
+module.exports = mongoose.model("Note", noteSchema);

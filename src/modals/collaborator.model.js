@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 
 const collaboratorSchema = mongoose.Schema({
-    userId: {
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true
     },
-    noteId: {
+    note: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Note",
         required: true
