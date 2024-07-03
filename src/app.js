@@ -32,6 +32,7 @@ const authRoutes = require("./routers/auth.routes.js");
 const userRoutes = require("./routers/user.routes.js");
 const noteRoutes = require("./routers/note.routes.js");
 const labelRoutes = require("./routers/label.routes.js");
+const collaboratorRoutes = require("./routers/collaborator.routes.js");
 
 app.get("/", (req, res) => {
   res.send("Hello From the server");
@@ -40,6 +41,7 @@ app.use(authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/notes", noteRoutes);
 app.use("/api/v1/labels", labelRoutes);
+app.use("/api/v1/collaborators", collaboratorRoutes);
 
 // using error handling custom middleware
 app.use(errorHandler);

@@ -116,5 +116,7 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+public/
+.vscode/
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#Node
