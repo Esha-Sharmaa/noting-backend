@@ -114,16 +114,74 @@ const getAllNotes = asyncHandler(async (req, res) => {
   if (!req.user || !req.user._id)
     throw new ApiError(403, "User not authenticated");
 
-  const notes = await Note.find({ user: req.user._id })
-    .populate("user", "displayName email avatar")
-    .populate("lable")
-    .populate({
-      path: "collaborators",
-      populate: {
-        path: "user",
-        select: "displayName email avatar",
+  const notes = await Note.aggregate([
+    {
+      $match: {
+        user: new mongoose.Types.ObjectId(req.user._id),
       },
-    });
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "user",
+      },
+    },
+    {
+      $unwind: "$user",
+    },
+    {
+      $project: {
+        "user.password": 0,
+        "user.__v": 0,
+        "user.refreshToken": 0,
+      },
+    },
+    {
+      $lookup: {
+        from: "labels",
+        localField: "label",
+        foreignField: "_id",
+        as: "label",
+      },
+    },
+    {
+      $lookup: {
+        from: "collaborators",
+        let: { noteId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$note", "$$noteId"] },
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "user",
+              foreignField: "_id",
+              as: "user",
+            },
+          },
+          { $unwind: "$user" },
+          {
+            $project: {
+              "user.password": 0, // Exclude password field
+              "user.__v": 0, // Exclude __v field
+              "user.refreshToken": 0, // Exclude refreshToken field
+            },
+          },
+        ],
+        as: "collaborators",
+      },
+    },
+  ]);
+  if (!notes) throw new ApiError(404, "Notes not found");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, notes, "Notes fetched successfully"));
 });
 
 const editNote = asyncHandler(async (req, res) => {
