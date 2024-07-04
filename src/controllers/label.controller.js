@@ -4,6 +4,17 @@ const ApiResponse = require("../utils/ApiResponse.js");
 const Label = require("../modals/label.model.js");
 const { matchedData, validationResult } = require("express-validator");
 
+const fetchAllLables = asyncHandler(async (req, res) => {
+  if (!req.user || !req.user._id)
+    throw new ApiError(403, "User not authenticated");
+
+  const labels = await Label.find({ user: req.user._id }).select("-user -__v");
+  if (!labels) throw new ApiError(404, "Labels not found");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, labels, "Labels fetched successfully"));
+});
 const createLabel = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) throw new ApiError(401, "validation errros");
@@ -34,4 +45,5 @@ const deleteLabel = asyncHandler(async (req, res) => {
 module.exports = {
   createLabel,
   deleteLabel,
+  fetchAllLables,
 };
