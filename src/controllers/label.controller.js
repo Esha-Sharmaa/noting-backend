@@ -6,7 +6,7 @@ const { matchedData, validationResult } = require("express-validator");
 
 const fetchAllLables = asyncHandler(async (req, res) => {
   if (!req.user || !req.user._id)
-    throw new ApiError(403, "User not authenticated");
+    throw new ApiError(401, "User not authenticated");
 
   const labels = await Label.find({ user: req.user._id }).select("-user -__v");
   if (!labels) throw new ApiError(404, "Labels not found");
@@ -16,6 +16,8 @@ const fetchAllLables = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, labels, "Labels fetched successfully"));
 });
 const createLabel = asyncHandler(async (req, res) => {
+  if (!req.user || !req.user._id)
+    throw new ApiError(401, "User not authenticated");
   const errors = validationResult(req);
   if (!errors.isEmpty()) throw new ApiError(401, "validation errros");
 
@@ -32,6 +34,8 @@ const createLabel = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, label, "Label created successfully"));
 });
 const deleteLabel = asyncHandler(async (req, res) => {
+  if (!req.user || !req.user._id)
+    throw new ApiError(401, "User not authenticated");
   const { id } = req.params;
   if (!id) throw new ApiError(400, "Label Id is required");
 
