@@ -10,7 +10,7 @@ const mongoose = require("mongoose");
 //completed
 const addNote = asyncHandler(async (req, res) => {
   if (!req.user || !req.user._id)
-    throw new ApiError(403, "User not authenticated");
+    throw new ApiError(401, "User not authenticated");
 
   const { title, content, type, listItems } = req.body;
   const noteImageLocalpath = req?.file?.path;
@@ -40,7 +40,7 @@ const addNote = asyncHandler(async (req, res) => {
 
 const getNote = asyncHandler(async (req, res) => {
   if (!req.user || !req.user._id)
-    throw new ApiError(403, "User not authenticated");
+    throw new ApiError(401, "User not authenticated");
   const { id } = req.params;
   if (!id) throw new ApiError(400, "Note id is required");
 
@@ -112,7 +112,7 @@ const getNote = asyncHandler(async (req, res) => {
 
 const getAllNotes = asyncHandler(async (req, res) => {
   if (!req.user || !req.user._id)
-    throw new ApiError(403, "User not authenticated");
+    throw new ApiError(401, "User not authenticated");
 
   const notes = await Note.aggregate([
     {
@@ -190,7 +190,7 @@ const editNote = asyncHandler(async (req, res) => {
 
 const deleteNote = asyncHandler(async (req, res) => {
   if (!req.user || !req.user._id)
-    throw new ApiError(403, "User not authenticated");
+    throw new ApiError(401, "User not authenticated");
 
   const { id } = req.params;
   if (!id) throw new ApiError(400, "Note id is required");
@@ -212,7 +212,7 @@ const deleteNote = asyncHandler(async (req, res) => {
 
 const addLabelToNote = asyncHandler(async (req, res) => {
   if (!req.user || !req.user._id)
-    throw new ApiError(403, "User not authenticated");
+    throw new ApiError(401, "User not authenticated");
 
   const { labelId, noteId } = req.body;
   if (!labelId || !noteId)
@@ -222,7 +222,7 @@ const addLabelToNote = asyncHandler(async (req, res) => {
   if (!label) throw new ApiError(404, "Label not found");
 
   if (label.user.toString() !== req.user._id.toString())
-    throw new ApiError(403, "You do not have permission to use this label");
+    throw new ApiError(401, "You do not have permission to use this label");
 
   const note = await Note.findOneAndUpdate(
     { _id: noteId, user: req.user._id },
@@ -241,7 +241,7 @@ const addLabelToNote = asyncHandler(async (req, res) => {
 
 const removeLabelFromNote = asyncHandler(async (req, res) => {
   if (!req.user || !req.user._id)
-    throw new ApiError(403, "User not authenticated");
+    throw new ApiError(401, "User not authenticated");
 
   const { labelId, noteId } = req.body;
   if (!labelId || !noteId)
@@ -251,7 +251,7 @@ const removeLabelFromNote = asyncHandler(async (req, res) => {
   if (!label) throw new ApiError(404, "Label not found");
 
   if (label.user.toString() !== req.user._id.toString())
-    throw new ApiError(403, "You do not have permission to use this label");
+    throw new ApiError(401, "You do not have permission to use this label");
 
   const note = await Note.findOneAndUpdate(
     { _id: noteId, user: req.user._id },
