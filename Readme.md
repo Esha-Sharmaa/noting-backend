@@ -44,7 +44,7 @@ Make sure you have the following installed on your machine:
 1. Clone the repository:
 
 ```sh
-git clone https://github.com/yourusername/noting-backend.git
+git clone https://github.com/Esha-Sharmaa/noting-backend.git
 cd noting-backend
 ```
 
@@ -57,17 +57,23 @@ npm install
 3. Set up environment variables. Create a `.env` file in the root directory and add the following:
 
 ```env
-PORT=5000
-MONGO_URI=your_mongo_db_connection_string
-JWT_SECRET=your_jwt_secret
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
+MONGO_URI=
+ACCESS_TOKEN_SECRET_KEY=
+REFRESH_TOKEN_SECRET_KEY=
+ACCESS_TOKEN_EXPIRY=
+REFRESH_TOKEN_EXPIRY=
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+CORS_ORIGIN=*
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET="
 ```
 
 4. Start the development server:
 
 ```sh
-npm run dev
+npm run start
 ```
 
 The server will be running on `http://localhost:5000`.
@@ -135,6 +141,8 @@ The server will be running on `http://localhost:5000`.
 - **passport.js**: Configures Google OAuth strategy for Passport.
 - **ApiResponse.js**: Class for standardized API responses.
 - **ApiError.js**: Class for standardized API error handling.
+- **cloudinary.js**: Contains functions for cloudinary upload.
+- **generateAccessAndRefreshToken.js**: Function to generate access and refresh tokens
 
 ## Validations
 
