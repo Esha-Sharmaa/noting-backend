@@ -9,7 +9,12 @@ require("./utils/passport.js");
 const app = express();
 
 // middleware configuration
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+    credentials: true, // Allow credentials (cookies, authorization headers, TLS client certificates)
+  })
+);
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cookieParser());
@@ -17,9 +22,12 @@ app.use(express.static("public"));
 
 app.use(
   session({
-    secret: "your_secret_key",
-    resave: true,
+    secret: "your-secret-key",
+    resave: false,
     saveUninitialized: true,
+    cookie: { secure: false },
+    saveUninitialized: false, // Ensure this is correctly set
+    resave: false, // Ensure this is correctly set
   })
 );
 
