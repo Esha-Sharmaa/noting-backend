@@ -22,7 +22,7 @@ app.use(express.static("public"));
 
 app.use(
   session({
-    secret: "your-secret-key",
+    secret: "secret-key",
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false },
