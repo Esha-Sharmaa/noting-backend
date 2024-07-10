@@ -13,14 +13,16 @@ const addNote = asyncHandler(async (req, res) => {
     throw new ApiError(401, "User not authenticated");
 
   const { title, content, type, listItems } = req.body;
+
+  console.log(req.body);
+  
+  if (!title || !type) throw new ApiError(400, "Title and type are required");
   const noteImageLocalpath = req?.file?.path;
 
   let imageUrl = null;
   if (noteImageLocalpath) {
     imageUrl = await uploadOnCloudinary(noteImageLocalpath);
   }
-
-  if (!title || !type) throw new ApiError(400, "Title and type are required");
 
   const newNote = await Note.create({
     title,
@@ -185,7 +187,46 @@ const getAllNotes = asyncHandler(async (req, res) => {
 });
 
 const editNote = asyncHandler(async (req, res) => {
-  console.log("edit a note");
+  if (!req.user || !req.user._id)
+    throw new ApiError(401, "User not authenticated");
+
+  const { id } = req.params;
+  const { title, content, listItems, type } = req.body;
+  console.log(req.body);
+
+  if (!id) throw new ApiError(400, "Note id is required");
+  if (!title || !type) throw new ApiError(400, "Title and type are required"); // Validate type as well
+
+  const noteImageLocalpath = req?.file?.path;
+
+  console.log(req?.file);
+  console.log(noteImageLocalpath);
+
+  let imageUrl = null;
+  if (noteImageLocalpath) {
+    try {
+      imageUrl = await uploadOnCloudinary(noteImageLocalpath);
+    } catch (error) {
+      console.error("Error uploading image to Cloudinary:", error);
+      throw new ApiError(500, "Error uploading image to Cloudinary");
+    }
+  }
+
+  const updatedNote = await Note.findByIdAndUpdate(id, {
+    $set: {
+      title,
+      content: content || null,
+      user: req.user._id,
+      imageUrl: type === "image" ? imageUrl : null,
+      listItems: type === "list" ? JSON.parse(listItems) : [],
+    },
+  });
+
+  if (!updatedNote) throw new ApiError(500, "Error updating note");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedNote, "Note updated successfully"));
 });
 
 const deleteNote = asyncHandler(async (req, res) => {
@@ -195,7 +236,8 @@ const deleteNote = asyncHandler(async (req, res) => {
   const { id } = req.params;
   if (!id) throw new ApiError(400, "Note id is required");
 
-  const note = await findOne({ _id: id, user: req.user._id });
+  const note = await Note.findOne({ _id: id, user: req.user._id });
+
   if (!note)
     throw new ApiError(
       404,
@@ -243,7 +285,8 @@ const removeLabelFromNote = asyncHandler(async (req, res) => {
   if (!req.user || !req.user._id)
     throw new ApiError(401, "User not authenticated");
 
-  const { labelId, noteId } = req.body;
+  const { labelId, noteId } = req.params;
+
   if (!labelId || !noteId)
     throw new ApiError(400, "LableID and NoteID both are required");
 
@@ -267,6 +310,169 @@ const removeLabelFromNote = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, {}, "Label removed successfully"));
 });
+const archiveNote = asyncHandler(async (req, res) => {
+  if (!req.user || !req.user._id)
+    throw new ApiError(401, "User not authenticated");
+  const { id } = req.params;
+  if (!id) throw new ApiError(400, "Note id is required");
+
+  const note = await Note.findById(id);
+  if (!note) throw new ApiError(404, "Note not found");
+
+  note.isArchived = true;
+  await note.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Note Archived successfully"));
+});
+const unarchiveNote = asyncHandler(async (req, res) => {
+  if (!req.user || !req.user._id)
+    throw new ApiError(401, "User not authenticated");
+  const { id } = req.params;
+  if (!id) throw new ApiError(400, "Note id is required");
+
+  const note = await Note.findById(id);
+  if (!note) throw new ApiError(404, "Note not found");
+
+  note.isArchived = false;
+  await note.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Note Unarchived successfully"));
+});
+
+const trashNote = asyncHandler(async (req, res) => {
+  if (!req.user || !req.user._id)
+    throw new ApiError(401, "User not authenticated");
+  const { id } = req.params;
+  if (!id) throw new ApiError(400, "Note id is required");
+
+  const note = await Note.findById(id);
+  if (!note) throw new ApiError(404, "Note not found");
+
+  note.isTrashed = true;
+  note.trashedAt = new Date().getDate();
+  await note.save();
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Note Trashed successfully"));
+});
+const restoreTrashNote = asyncHandler(async (req, res) => {
+  if (!req.user || !req.user._id)
+    throw new ApiError(401, "User not authenticated");
+  const { id } = req.params;
+  if (!id) throw new ApiError(400, "Note id is required");
+
+  const note = await Note.findById(id);
+  if (!note) throw new ApiError(404, "Note not found");
+
+  note.isTrashed = false;
+  note.trashedAt = null;
+  await note.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Note Trashed successfully"));
+});
+
+const getCollabNotes = asyncHandler(async (req, res) => {
+  if (!req.user || !req.user._id)
+    throw new ApiError(401, "User not authenticated");
+
+  const collabNote = await Collaborator.aggregate([
+    {
+      $match: { user: req.user._id },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "user",
+      },
+    },
+    {
+      $unwind: "$user",
+    },
+
+    {
+      $lookup: {
+        from: "notes",
+        localField: "note",
+        foreignField: "_id",
+        as: "note",
+      },
+    },
+    {
+      $unwind: "$note",
+    },
+    {
+      $lookup: {
+        from: "labels",
+        let: { labelIds: "$note.label" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $in: ["$_id", "$$labelIds"] }, // Label ID must be in note's label array
+                  { $eq: ["$user", req.user._id] }, // Label's user must be the current user
+                ],
+              },
+            },
+          },
+        ],
+        as: "note.labels",
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "note.user",
+        foreignField: "_id",
+        as: "note.userDetails",
+      },
+    },
+    {
+      $unwind: {
+        path: "$note.userDetails",
+        preserveNullAndEmptyArrays: true, // This will keep notes without matching users
+      },
+    },
+    {
+      $project: {
+        "note._id": 1,
+        "note.title": 1,
+        "note.content": 1,
+        "note.type": 1,
+        "note.userDetails.displayName": 1,
+        "note.userDetails.email": 1,
+        "note.userDetails.avatar": 1,
+        "note.labels": 1,
+
+        "note.listItems": 1,
+        "note.imageUrl": 1,
+        "note.createdAt": 1,
+        "note.updatedAt": 1,
+
+        "user.displayName": 1,
+        "user.email": 1,
+        "user.avatar": 1,
+        permission: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+    },
+  ]);
+
+  if (!collabNote) throw new ApiError(404, "Note not found");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, collabNote, "Notes fetched successfully"));
+});
+
 module.exports = {
   addNote,
   getNote,
@@ -275,4 +481,9 @@ module.exports = {
   deleteNote,
   addLabelToNote,
   removeLabelFromNote,
+  archiveNote,
+  unarchiveNote,
+  trashNote,
+  restoreTrashNote,
+  getCollabNotes,
 };

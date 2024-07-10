@@ -13,6 +13,9 @@ const addCollborator = asyncHandler(async (req, res) => {
   if (!email || !noteId || !permission)
     throw new ApiError(404, "Email noteid and permission all are required");
 
+  if (email === req.user.email)
+    throw new ApiError(400, "Can not added owner as collaborator");
+
   const user = await User.findOne({ email });
   if (!user) throw new ApiError(404, "User not found");
 
