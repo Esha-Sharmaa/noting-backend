@@ -11,8 +11,8 @@ const app = express();
 // middleware configuration
 app.use(
   cors({
-    origin: "*",
-    credentials: true, // Allow credentials (cookies, authorization headers, TLS client certificates)
+    origin: "http://localhost:5173",
+    credentials: true,
   })
 );
 app.use(express.json({ limit: "16kb" }));
@@ -24,10 +24,8 @@ app.use(
   session({
     secret: "secret-key",
     resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false },
+    cookie: { secure: true },
     saveUninitialized: false, // Ensure this is correctly set
-    resave: false, // Ensure this is correctly set
   })
 );
 
