@@ -15,7 +15,7 @@ const addNote = asyncHandler(async (req, res) => {
   const { title, content, type, listItems } = req.body;
 
   console.log(req.body);
-  
+
   if (!title || !type) throw new ApiError(400, "Title and type are required");
   const noteImageLocalpath = req?.file?.path;
 
@@ -176,6 +176,11 @@ const getAllNotes = asyncHandler(async (req, res) => {
           },
         ],
         as: "collaborators",
+      },
+    },
+    {
+      $sort: {
+        isPinned: -1,
       },
     },
   ]);
@@ -473,6 +478,38 @@ const getCollabNotes = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, collabNote, "Notes fetched successfully"));
 });
 
+const pinNote = asyncHandler(async (req, res) => {
+  if (!req.user || !req.user._id)
+    throw new ApiError(401, "User not authenticated");
+  const { id } = req.params;
+  if (!id) throw new ApiError(400, "Note id is required");
+
+  const note = await Note.findById(id);
+  if (!note) throw new ApiError(404, "Note not found");
+
+  note.isPinned = true;
+  await note.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Note Pinned successfully"));
+});
+const unpinNote = asyncHandler(async (req, res) => {
+  if (!req.user || !req.user._id)
+    throw new ApiError(401, "User not authenticated");
+  const { id } = req.params;
+  if (!id) throw new ApiError(400, "Note id is required");
+
+  const note = await Note.findById(id);
+  if (!note) throw new ApiError(404, "Note not found");
+
+  note.isPinned = false;
+  await note.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Note Pinned successfully"));
+});
 module.exports = {
   addNote,
   getNote,
@@ -486,4 +523,6 @@ module.exports = {
   trashNote,
   restoreTrashNote,
   getCollabNotes,
+  pinNote,
+  unpinNote,
 };
