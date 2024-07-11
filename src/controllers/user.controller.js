@@ -5,13 +5,16 @@ const User = require("../modals/user.modal");
 const ApiResponse = require("../utils/ApiResponse");
 const generateAccessAndRefreshToken = require("../utils/generateAccessAndRefreshToken.js");
 const jwt = require("jsonwebtoken");
-
+const {
+  uploadOnCloudinary,
+  deleteFromCloudinary,
+} = require("../utils/cloudniary.js");
 const options = {
   httpOnly: true,
   secure: true,
 };
 
-const registerUser = asyncHandler(async (req, res, next) => {
+const registerUser = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     let errobj = {};
@@ -129,10 +132,57 @@ const logout = asyncHandler(async (req, res) => {
     .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "User logged Out Successfully"));
 });
+const changeAvatar = asyncHandler(async (req, res) => {
+  if (!req.user || !req.user._id) throw new ApiError(401, "Unauthorized user");
+
+  const user = await User.findById(req.user._id);
+  if (!user) throw new ApiError(404, "User not found");
+
+  const avatarLocalPath = req?.file?.path;
+  if (!avatarLocalPath) throw new ApiError(400, "Avatar image is required");
+
+  if (user.avatar) {
+    const publicId = user.avatar.split("/").pop().split(".")[0];
+    await deleteFromCloudinary(publicId);
+  }
+  const avatarUrl = await uploadOnCloudinary(avatarLocalPath);
+
+  user.avatar = avatarUrl;
+  await user.save();
+
+  const updatedUser = await User.findById(req.user._id).select(
+    "-password -refreshToken -googleId"
+  );
+
+  if (!avatarUrl) throw new ApiError(500, "Error uploading avatar");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, "Avatar updated successfully"));
+});
+const deleteAvatar = asyncHandler(async (req, res) => {
+  if (!req.user || !req.user._id) throw new ApiError(401, "Unauthorized user");
+
+  const user = await User.findById(req.user._id);
+  if (!user) throw new ApiError(404, "User not found");
+
+  if (user.avatar) {
+    const publicId = user.avatar.split("/").pop().split(".")[0];
+    await deleteFromCloudinary(publicId);
+  }
+  user.avatar = null;
+  await user.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Avatar deleted successfully"));
+});
 module.exports = {
   registerUser,
   login,
   logout,
   refreshAccessToken,
   getUserProfile,
+  changeAvatar,
+  deleteAvatar,
 };
