@@ -8,7 +8,7 @@ const verifyJwt = async (req, _, next) => {
       req?.cookies?.accessToken ||
       req.header("Authorization")?.replace("Bearer ", "");
 
-    if (!token) throw new ApiError(401, "Unauthorized Access");
+    if (!token) throw new ApiError(403, "Unauthorized Access");
 
     const decodedTokenInfo = jwt.verify(
       token,
@@ -19,14 +19,14 @@ const verifyJwt = async (req, _, next) => {
       "-password -refreshToken -googleId"
     );
 
-    if (!user) throw new ApiError(401, "Invalid Access Token");
+    if (!user) throw new ApiError(403, "Invalid Access Token");
 
     req.user = user;
     next();
   } catch (error) {
     next(
       new ApiError(
-        error.statusCode || 401,
+        error.statusCode || 403,
         error.message || "Invalid Access Token"
       )
     );
