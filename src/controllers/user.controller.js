@@ -12,6 +12,7 @@ const {
 const options = {
   httpOnly: true,
   secure: true,
+  sameSite: "None",
 };
 
 const registerUser = asyncHandler(async (req, res) => {
