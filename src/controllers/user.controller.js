@@ -5,6 +5,8 @@ const User = require("../modals/user.modal");
 const ApiResponse = require("../utils/ApiResponse");
 const generateAccessAndRefreshToken = require("../utils/generateAccessAndRefreshToken.js");
 const jwt = require("jsonwebtoken");
+const axios = require("axios");
+
 const {
   uploadOnCloudinary,
   deleteFromCloudinary,
@@ -46,26 +48,56 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, createdUser, "User Registered Successfully"));
 });
 const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  let user;
+  if (req?.body?.googleAccessToken) {
+    const { googleAccessToken } = req.body;
+    const response = await axios.get(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      {
+        headers: {
+          Authorization: `Bearer ${googleAccessToken}`,
+        },
+      }
+    );
+    const { name, email, avatar } = response.data;
+    const existedUser = await User.findOne({ email });
+    if (!existedUser) {
+      const newUser = await User.create({
+        displayName: name,
+        email,
+        avatar: picture || null,
+      });
+      const createdUser = await User.findById(newUser._id).select(
+        "-password -refreshToken -googleId -createdAt -updatedAt"
+      );
 
-  if (!email || !password)
-    throw new ApiError(400, "Email and password are required");
+      if (!createdUser)
+        throw new ApiError(500, "Internal Server Error While registering");
+      user = createdUser;
+    } else user = existedUser;
+  } else {
+    const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-  if (!user) throw new ApiError(404, "User not found");
+    if (!email || !password)
+      throw new ApiError(400, "Email and password are required");
 
-  const isMatched = await user.isPasswordCorrect(password);
+    user = await User.findOne({ email });
+    if (!user) throw new ApiError(404, "User not found");
 
-  if (!isMatched) throw new ApiError(401, "Bad Credentials");
+    const isMatched = await user.isPasswordCorrect(password);
+
+    if (!isMatched) throw new ApiError(401, "Bad Credentials");
+  }
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
     user._id
   );
 
-  const loggedInUser = await User.findById(user._id).select(
+  let loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken -googleId"
   );
-
+  loggedInUser = loggedInUser.toObject();
+  loggedInUser.accessToken = accessToken;
   res
     .status(200)
     .cookie("accessToken", accessToken, options)
