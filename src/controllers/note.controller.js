@@ -196,13 +196,10 @@ const editNote = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { title, content, listItems, type } = req.body;
 
-
   if (!id) throw new ApiError(400, "Note id is required");
   if (!title || !type) throw new ApiError(400, "Title and type are required"); // Validate type as well
 
   const noteImageLocalpath = req?.file?.path;
-
-
 
   let imageUrl = null;
   if (noteImageLocalpath) {
@@ -218,7 +215,6 @@ const editNote = asyncHandler(async (req, res) => {
     $set: {
       title,
       content: content || null,
-      user: req.user._id,
       imageUrl: type === "image" ? imageUrl : null,
       listItems: type === "list" ? JSON.parse(listItems) : [],
     },
