@@ -33,6 +33,8 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// improting cron job for deleting trashed notes
+require("./cron/deleteOldNotes.js");
 // importing routes
 const userRoutes = require("./routers/user.routes.js");
 const noteRoutes = require("./routers/note.routes.js");
